@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const os = require('os');
+const { exec } = require('child_process');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,9 +18,34 @@ io.on('connection', (socket) => {
         switch (data) {
             case 'play':
                 // Logic to play media
+                exec('xdotool key k', (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`Error executing command: ${error.message}`);
+                        return;
+                    }
+                    if (stderr) {
+                        console.error(`stderr: ${stderr}`);
+                        return;
+                    }
+                    console.log(`stdout: ${stdout}`);
+                });
+
                 break;
             case 'pause':
                 // Logic to pause media
+                exec('xdotool key space', (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`Error executing command: ${error.message}`);
+                        return;
+                    }
+                    if (stderr) {
+                        console.error(`stderr: ${stderr}`);
+                        return;
+                    }
+                    console.log(`stdout: ${stdout}`);
+                });
+
+
                 break;
             // Add more cases for different commands
             default:
