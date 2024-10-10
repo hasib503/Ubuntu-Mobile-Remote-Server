@@ -3,60 +3,77 @@ const http = require('http');
 const socketIo = require('socket.io');
 const os = require('os');
 const { exec } = require('child_process');
-
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+const { spawn } = require('child_process');
+
+app.get('/test', (req, res) => {
+    
+    const pythonProcess = spawn('python3', ['mouse_move.py']);
+
+
+    // Capture output from Python script
+    pythonProcess.stdout.on('data', (data) => {
+        res.send(`Python output: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+        res.status(500).send('Error running Python script.');
+    });
+
+    pythonProcess.on('close', (code) => {
+        console.log(`Python script finished with code ${code}`);
+    });
+
+
+});
+
+
+
 
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Handle commands from the client
     socket.on('command', (data) => {
         console.log(`Command received: ${data}`);
-        // Add logic to handle commands
         switch (data) {
             case 'play':
-                // Logic to play media
-                exec('xdotool key k', (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error executing command: ${error.message}`);
-                        return;
-                    }
-                    if (stderr) {
-                        console.error(`stderr: ${stderr}`);
-                        return;
-                    }
-                    console.log(`stdout: ${stdout}`);
-                });
-
+                exec('xdotool key k', handleExec);
                 break;
             case 'pause':
-                // Logic to pause media
-                exec('xdotool key space', (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error executing command: ${error.message}`);
-                        return;
-                    }
-                    if (stderr) {
-                        console.error(`stderr: ${stderr}`);
-                        return;
-                    }
-                    console.log(`stdout: ${stdout}`);
-                });
-
-
+                exec('xdotool key space', handleExec);
                 break;
-            // Add more cases for different commands
             default:
                 console.log('Unknown command');
         }
+    });
+
+    socket.on('move', (data) => {
+        console.log(`Move command received`);
+        const { dx, dy } = data;
+
+
+
     });
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
     });
 });
+
+const handleExec = (error, stdout, stderr) => {
+    if (error) {
+        console.error(`Error: ${error.message}`);
+        return;
+    }
+    if (stderr) {
+        console.error(`stderr: ${stderr}`);
+        return;
+    }
+    console.log(`stdout: ${stdout}`);
+};
 
 const PORT = process.env.PORT || 3000;
 
